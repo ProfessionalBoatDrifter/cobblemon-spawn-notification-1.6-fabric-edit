@@ -25,6 +25,7 @@ class SpawnNotificationConfig {
 
     val labelsForBroadcast: MutableSet<String> = mutableSetOf("legendary", "mythical", "ultra_beast", "paradox")
     val bucketsForBroadcast: MutableSet<String> = mutableSetOf()
+    val pokemonForBroadcast: MutableSet<String> = mutableSetOf()
 
     val blacklistForBroadcast: MutableSet<String> = mutableSetOf()
     val blacklistForBroadcastEvenIfShiny: MutableSet<String> = mutableSetOf()

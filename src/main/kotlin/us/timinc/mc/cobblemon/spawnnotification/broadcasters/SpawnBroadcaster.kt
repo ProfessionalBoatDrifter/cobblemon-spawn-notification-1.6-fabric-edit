@@ -32,8 +32,14 @@ class SpawnBroadcaster(
                 BUCKET
             )
         }
+    private val customPokemon
+        get() = config.pokemonForBroadcast.any {
+            PokemonProperties.parse(
+                it
+            ).matches(pokemon)
+        }
     private val shouldBroadcast
-        get() = ((shiny && config.broadcastShiny) || label != null || bucket != null) && config.blacklistForBroadcastEvenIfShiny.none {
+        get() = ((shiny && config.broadcastShiny) || label != null || bucket != null || customPokemon) && config.blacklistForBroadcastEvenIfShiny.none {
             PokemonProperties.parse(
                 it
             ).matches(pokemon)
