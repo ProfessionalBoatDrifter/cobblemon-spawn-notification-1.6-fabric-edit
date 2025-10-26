@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    id("fabric-loom") version("1.9-SNAPSHOT")
+    id("fabric-loom") version("1.10-SNAPSHOT")
     kotlin("jvm") version ("2.1.0")
 }
 
@@ -13,6 +13,7 @@ repositories {
     maven("https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/")
     maven("https://maven.impactdev.net/repository/development/")
     maven("https://api.modrinth.com/maven")
+    maven("https://maven.fabricmc.net/teamreborn/energy/")
 }
 
 dependencies {
@@ -22,6 +23,9 @@ dependencies {
 
     // Fabric API
     modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_version")}")
+
+    // TechReborn Energy API (Standalone)
+    modImplementation("teamreborn:energy:4.1.0")
 
     // Fabric Kotlin
     modImplementation("net.fabricmc:fabric-language-kotlin:${property("fabric_kotlin_version")}")
@@ -38,11 +42,11 @@ dependencies {
 
     // Tech Reborn
     // This provides the EnergyStorage API
-    modImplementation("TechReborn:TechReborn-1.21.1:${property("techreborn_version")}")
+    // modImplementation("TechReborn:TechReborn-1.21.1:${property("techreborn_version")}")
 
     // Oritech
     // Also uses and provides the EnergyStorage API
-    modImplementation("maven.modrinth:oritech:${property("oritech_version")}")
+    // modImplementation("maven.modrinth:oritech:${property("oritech_version")}")
 }
 
 tasks {

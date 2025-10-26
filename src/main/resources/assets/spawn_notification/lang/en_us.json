@@ -44,16 +44,16 @@
   "spawn_notification.label.baby": "Baby",
   "spawn_notification.label.starter": "Starter",
   "spawn_notification_shinysoundsubtitle": "A shiny appeared",
-  "item.spawn_notification.poke_tracker": "Poke Tracker",
-  "spawn_notification.tracker.full": "This Poke Tracker's tracking list is full.",
+  "item.spawn_notification.poke_tracker": "PokéTracker",
+  "spawn_notification.tracker.full": "This PokéTracker's tracking list is full.",
   "spawn_notification.tracker.added": "Now tracking %1$s.",
   "spawn_notification.tracker.already_tracking": "Already tracking %1$s.",
-  "spawn_notification.tracker.cleared": "Poke Tracker tracking list cleared.",
-  "spawn_notification.tracker.empty": "This Poke Tracker is not tracking any Pokémon.",
+  "spawn_notification.tracker.cleared": "PokéTracker tracking list cleared.",
+  "spawn_notification.tracker.empty": "This PokéTracker is not tracking any Pokémon.",
   "spawn_notification.tracker.tracking_list": "Currently tracking:",
-  "spawn_notification.tracker.no_energy": "The Poke Tracker is out of energy.",
+  "spawn_notification.tracker.no_energy": "The PokéTracker is out of energy.",
   "spawn_notification.tracker.tooltip.energy": "Energy: %1$s / %2$s",
   "spawn_notification.tracker.tooltip.tracking": "Tracking:",
   "spawn_notification.tracker.notification": "Your tracker detected a %1$s%2$s%3$s%4$s! %5$s%6$s%7$s%8$s%9$s",
-  "spawn_notification.trackersoundsubtitle": "PokeTracker ping"
+  "spawn_notification.trackersoundsubtitle": "PokéTracker ping"
 }
