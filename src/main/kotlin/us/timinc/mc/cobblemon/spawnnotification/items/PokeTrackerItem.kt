@@ -19,6 +19,11 @@ import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.CURRENT_ENERGY
 import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.NOTIFY_NO_ENERGY
 import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.TRACKED_POKEMON
 import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.config
+import net.minecraft.sounds.SoundEvent
+import net.minecraft.sounds.SoundSource
+import net.minecraft.util.Mth
+import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.PING_COOLDOWN
+import us.timinc.mc.cobblemon.spawnnotification.util.isReallyWild
 
 class PokeTrackerItem(properties: Properties) : Item(properties) {
     // No companion object needed for keys anymore, they are in SpawnNotification
@@ -30,43 +35,94 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
      * Handles energy drain once per second (every 20 ticks).
      */
     override fun inventoryTick(stack: ItemStack, level: Level, entity: Entity, slotId: Int, isSelected: Boolean) {
-        if (level.isClientSide || !config.pokeTrackerEnabled || !config.pokeTrackerEnergyEnabled || entity !is Player) return
+        if (level.isClientSide || entity !is Player) return
 
-        // Run once per second
-        if (level.gameTime % 20 == 0L) {
-            // Use Data Components instead of NBT
-            var currentEnergy = stack.getOrDefault(CURRENT_ENERGY, config.pokeTrackerMaxEnergy)
-
-            if (currentEnergy <= 0) {
-                // Notify player they are out of energy (but only once)
-                if (!stack.has(NOTIFY_NO_ENERGY)) {
-                    entity.sendSystemMessage(
-                        Component.translatable("spawn_notification.tracker.no_energy")
-                            .withStyle(ChatFormatting.RED)
-                    )
-                    // Set the flag component
-                    stack.set(NOTIFY_NO_ENERGY, Unit.INSTANCE)
-                }
-                return
-            } else {
-                // Reset notification flag if it has power
-                stack.remove(NOTIFY_NO_ENERGY)
-            }
-
-            // Get component list (defaults to emptyList if not present)
-            val trackedList = stack.getOrDefault(TRACKED_POKEMON, emptyList())
-
-            // Drain idle energy + active energy (if tracking)
-            val drain = if (trackedList.isEmpty()) {
-                config.pokeTrackerIdleEnergyDrainPerSecond
-            } else {
-                config.pokeTrackerIdleEnergyDrainPerSecond + config.pokeTrackerActiveEnergyDrainPerSecond
-            }
-
-            currentEnergy = (currentEnergy - drain).coerceAtLeast(0)
-            // Set the new energy value
-            stack.set(CURRENT_ENERGY, currentEnergy)
+        // --- Ping Logic (runs every tick) ---
+        if (config.pokeTrackerPingingEnabled) {
+            handlePinging(stack, level, entity)
         }
+
+        // --- Energy Drain Logic (runs once per second) ---
+        if (level.gameTime % 20 == 0L) {
+            if (config.pokeTrackerEnabled && config.pokeTrackerEnergyEnabled) {
+                handleEnergyDrain(stack, entity)
+            }
+        }
+    }
+
+    private fun handlePinging(stack: ItemStack, level: Level, player: Player) {
+        // 1. Handle Cooldown
+        var cooldown = stack.getOrDefault(PING_COOLDOWN, 0)
+        if (cooldown > 0) {
+            stack.set(PING_COOLDOWN, cooldown - 1)
+            return
+        }
+
+        // 2. Check if active (energy + tracking list)
+        if (config.pokeTrackerEnergyEnabled) {
+            val currentEnergy = stack.getOrDefault(CURRENT_ENERGY, 0)
+            if (currentEnergy <= 0) return // Out of power
+        }
+
+        val trackedList = stack.get(TRACKED_POKEMON) ?: return
+        if (trackedList.isEmpty()) return // Not tracking anything
+
+        // 3. We are "actively searching". Find closest tracked Pokemon.
+        val searchBox = player.boundingBox.inflate(config.pokeTrackerMaxPingDistance)
+        val nearbyPokemon = level.getEntitiesOfClass(PokemonEntity::class.java, searchBox) {
+            it.pokemon.isReallyWild() && it.pokemon.species.resourceIdentifier.toString() in trackedList
+        }
+        val closestPokemon = nearbyPokemon.minByOrNull { it.distanceToSqr(player) }
+
+        // 4. Get the sound event from config
+        val pingSoundEvent = SoundEvent.createVariableRangeEvent(ResourceLocation.parse(config.pokeTrackerPingSound))
+
+        // 5. Play sound based on result
+        if (closestPokemon == null) {
+            // --- No Result ---
+            level.playSound(null, player.blockPosition(), pingSoundEvent, SoundSource.PLAYERS, 1.0f, config.pokeTrackerNoResultPitch)
+            stack.set(PING_COOLDOWN, config.pokeTrackerNoResultPingInterval)
+        } else {
+            // --- Result Found ---
+            val distance = player.distanceTo(closestPokemon).toDouble()
+            // Calculate 1.0 (close) to 0.0 (far)
+            val distPercent = 1.0 - (distance / config.pokeTrackerMaxPingDistance).coerceIn(0.0, 1.0)
+
+            // Lerp (Linear Interpolation) to find pitch and interval
+            val pitch = Mth.lerp(distPercent, config.pokeTrackerMinPitch.toDouble(), config.pokeTrackerMaxPitch.toDouble()).toFloat()
+            val interval = Mth.lerp(distPercent, config.pokeTrackerMinPingInterval.toDouble(), config.pokeTrackerMaxPingInterval.toDouble()).toInt()
+
+            level.playSound(null, player.blockPosition(), pingSoundEvent, SoundSource.PLAYERS, 1.0f, pitch)
+            stack.set(PING_COOLDOWN, interval)
+        }
+    }
+
+    private fun handleEnergyDrain(stack: ItemStack, player: Player) {
+        // (This is the logic that was previously inside the inventoryTick's 20-tick check)
+        var currentEnergy = stack.getOrDefault(CURRENT_ENERGY, config.pokeTrackerMaxEnergy)
+
+        if (currentEnergy <= 0) {
+            if (!stack.has(NOTIFY_NO_ENERGY)) {
+                player.sendSystemMessage(
+                    Component.translatable("spawn_notification.tracker.no_energy")
+                        .withStyle(ChatFormatting.RED)
+                )
+                stack.set(NOTIFY_NO_ENERGY, Unit.INSTANCE)
+            }
+            return
+        } else {
+            stack.remove(NOTIFY_NO_ENERGY)
+        }
+
+        val trackedList = stack.getOrDefault(TRACKED_POKEMON, emptyList())
+        val drain = if (trackedList.isEmpty()) {
+            config.pokeTrackerIdleEnergyDrainPerSecond
+        } else {
+            config.pokeTrackerIdleEnergyDrainPerSecond + config.pokeTrackerActiveEnergyDrainPerSecond
+        }
+
+        currentEnergy = (currentEnergy - drain).coerceAtLeast(0)
+        stack.set(CURRENT_ENERGY, currentEnergy)
     }
 
     /**

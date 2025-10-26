@@ -4,5 +4,11 @@
     "sounds": [
       "spawn_notification:shiny"
     ]
+  },
+  "poke_tracker_ping": {
+    "subtitle": "spawn_notification.trackersoundsubtitle",
+    "sounds": [
+      "spawn_notification:tracker_ping"
+    ]
   }
 }

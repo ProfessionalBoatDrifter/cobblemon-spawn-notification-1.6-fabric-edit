@@ -38,6 +38,12 @@ object SpawnNotification : ModInitializer {
     @JvmStatic
     var SHINY_SOUND_EVENT: SoundEvent = SoundEvent.createVariableRangeEvent(SHINY_SOUND_ID)
 
+    @JvmStatic
+    var POKE_TRACKER_PING_SOUND_ID: ResourceLocation = ResourceLocation.fromNamespaceAndPath(MOD_ID, "poke_tracker_ping")
+
+    @JvmStatic
+    var POKE_TRACKER_PING_SOUND_EVENT: SoundEvent = SoundEvent.createVariableRangeEvent(POKE_TRACKER_PING_SOUND_ID)
+
     // --- Custom Data Components ---
     val CURRENT_ENERGY: DataComponentType<Int> = Registry.register(
         BuiltInRegistries.DATA_COMPONENT_TYPE,
@@ -55,6 +61,11 @@ object SpawnNotification : ModInitializer {
         // Fix: Use Codec.unit() for net.minecraft.util.Unit
         DataComponentType.builder<Unit>().persistent(Codec.unit(net.minecraft.util.Unit.INSTANCE)).build()
     )
+    val PING_COOLDOWN: DataComponentType<Int> = Registry.register(
+        BuiltInRegistries.DATA_COMPONENT_TYPE,
+        ResourceLocation.fromNamespaceAndPath(MOD_ID, "ping_cooldown"),
+        DataComponentType.builder<Int>().persistent(Codec.INT).build()
+    )
     // --- End Custom Data Components ---
 
     // Define the new item, now with default components
@@ -64,6 +75,7 @@ object SpawnNotification : ModInitializer {
             .component(CURRENT_ENERGY, config.pokeTrackerMaxEnergy)
             // Set default empty tracking list on creation
             .component(TRACKED_POKEMON, emptyList())
+            .component(PING_COOLDOWN, 0)
     )
 
     override fun onInitialize() {
@@ -71,6 +83,7 @@ object SpawnNotification : ModInitializer {
         CURRENT_ENERGY
         TRACKED_POKEMON
         NOTIFY_NO_ENERGY
+        PING_COOLDOWN
 
         // Register Item
         Registry.register(
@@ -82,6 +95,13 @@ object SpawnNotification : ModInitializer {
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register { content ->
             content.accept(POKE_TRACKER_ITEM)
         }
+
+        // ADD THIS (to register the sound):
+        Registry.register(
+            BuiltInRegistries.SOUND_EVENT,
+            POKE_TRACKER_PING_SOUND_ID,
+            POKE_TRACKER_PING_SOUND_EVENT
+        )
 
         // --- Register Energy API ---
         // This tells Fabric: "When another mod asks for the EnergyStorage of a POKE_TRACKER_ITEM,

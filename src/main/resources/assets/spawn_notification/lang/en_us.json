@@ -54,5 +54,6 @@
   "spawn_notification.tracker.no_energy": "The Poke Tracker is out of energy.",
   "spawn_notification.tracker.tooltip.energy": "Energy: %1$s / %2$s",
   "spawn_notification.tracker.tooltip.tracking": "Tracking:",
-  "spawn_notification.tracker.notification": "Your tracker detected a %1$s%2$s%3$s%4$s! %5$s%6$s%7$s%8$s%9$s"
+  "spawn_notification.tracker.notification": "Your tracker detected a %1$s%2$s%3$s%4$s! %5$s%6$s%7$s%8$s%9$s",
+  "spawn_notification.trackersoundsubtitle": "PokeTracker ping"
 }

@@ -28,6 +28,17 @@ class SpawnNotificationConfig {
     val pokeTrackerIdleEnergyDrainPerSecond = 1 // 1 per second
     val pokeTrackerActiveEnergyDrainPerSecond = 5 // 5 per second (stacks with idle)
 
+    // --- Poke Tracker Pinging ---
+    val pokeTrackerPingingEnabled = true
+    val pokeTrackerPingSound = "minecraft:block.note_block.pling" // A safe, default sound. Can be changed to any sound ID.
+    val pokeTrackerMaxPingDistance = 64.0 // Max distance in blocks to start detecting Pokémon.
+    val pokeTrackerNoResultPingInterval = 100 // 5 seconds (100 ticks).
+    val pokeTrackerNoResultPitch = 0.5f // Low pitch for "no result".
+    val pokeTrackerMinPingInterval = 8 // 0.4 seconds (8 ticks) when very close.
+    val pokeTrackerMaxPingInterval = 100 // 5 seconds (100 ticks) when at max distance.
+    val pokeTrackerMinPitch = 0.8f // Pitch at max distance.
+    val pokeTrackerMaxPitch = 1.2f // Pitch when very close.
+
     val broadcastRange: Int = -1
     val playerLimit: Int = -1
 
