@@ -20,6 +20,14 @@ class SpawnNotificationConfig {
     val broadcastPlayerSpawnedOn = false
     val disableWaypoints = false
 
+    // New Poke Tracker Config
+    val pokeTrackerEnabled = true
+    val pokeTrackerMaxTrackedPerItem = 2
+    val pokeTrackerEnergyEnabled = true
+    val pokeTrackerMaxEnergy = 1000
+    val pokeTrackerIdleEnergyDrainPerSecond = 1 // 1 per second
+    val pokeTrackerActiveEnergyDrainPerSecond = 5 // 5 per second (stacks with idle)
+
     val broadcastRange: Int = -1
     val playerLimit: Int = -1
 

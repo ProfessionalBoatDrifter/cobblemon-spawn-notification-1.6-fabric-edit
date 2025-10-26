@@ -43,5 +43,16 @@
   "spawn_notification.label.paradox": "Phantom of the Tides",
   "spawn_notification.label.baby": "Lil’ Deckhand",
   "spawn_notification.label.starter": "First Mate",
-  "spawn_notification_shinysoundsubtitle": "A shiny booty be found!"
+  "spawn_notification_shinysoundsubtitle": "A shiny booty be found!",
+  "item.spawn_notification.poke_tracker": "Spyglass o' Trackin'",
+  "spawn_notification.tracker.full": "This Spyglass's trackin' list be full, matey!",
+  "spawn_notification.tracker.added": "Now huntin' for %1$s!",
+  "spawn_notification.tracker.already_tracking": "We already be huntin' for %1$s!",
+  "spawn_notification.tracker.cleared": "Spyglass trackin' list cleared!",
+  "spawn_notification.tracker.empty": "This Spyglass ain't trackin' no creatures.",
+  "spawn_notification.tracker.tracking_list": "Currently huntin' for:",
+  "spawn_notification.tracker.no_energy": "The Spyglass be out o' juice!",
+  "spawn_notification.tracker.tooltip.energy": "Juice: %1$s / %2$s",
+  "spawn_notification.tracker.tooltip.tracking": "Huntin' for:",
+  "spawn_notification.tracker.notification": "Shiver me timbers! Yer Spyglass spotted a %1$s%2$s%3$s%4$s! %5$s%6$s%7$s%8$s%9$s"
 }

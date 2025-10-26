@@ -41,5 +41,16 @@
   "spawn_notification.label.paradox": "Paradoxo",
   "spawn_notification.label.baby": "Bebê",
   "spawn_notification.label.starter": "Inicial",
-  "spawn_notification_shinysoundsubtitle": "Um shiny apareceu"
+  "spawn_notification_shinysoundsubtitle": "Um shiny apareceu",
+  "item.spawn_notification.poke_tracker": "Poke Tracker",
+  "spawn_notification.tracker.full": "A lista de rastreio deste Poke Tracker está cheia.",
+  "spawn_notification.tracker.added": "A rastrear %1$s.",
+  "spawn_notification.tracker.already_tracking": "Já a rastrear %1$s.",
+  "spawn_notification.tracker.cleared": "Lista de rastreio do Poke Tracker limpa.",
+  "spawn_notification.tracker.empty": "Este Poke Tracker não está a rastrear nenhum Pokémon.",
+  "spawn_notification.tracker.tracking_list": "Atualmente a rastrear:",
+  "spawn_notification.tracker.no_energy": "O Poke Tracker está sem energia.",
+  "spawn_notification.tracker.tooltip.energy": "Energia: %1$s / %2$s",
+  "spawn_notification.tracker.tooltip.tracking": "A rastrear:",
+  "spawn_notification.tracker.notification": "O teu tracker detectou um %1$s%2$s%3$s%4$s! %5$s%6$s%7$s%8$s%9$s"
 }

@@ -43,5 +43,16 @@
   "spawn_notification.label.paradox": "Paradox",
   "spawn_notification.label.baby": "Baby",
   "spawn_notification.label.starter": "Starter",
-  "spawn_notification_shinysoundsubtitle": "Ein Schillerndes ist erschienen"
+  "spawn_notification_shinysoundsubtitle": "Ein Schillerndes ist erschienen",
+  "item.spawn_notification.poke_tracker": "Poke Tracker",
+  "spawn_notification.tracker.full": "Die Tracking-Liste dieses Poke-Trackers ist voll.",
+  "spawn_notification.tracker.added": "Verfolgt jetzt %1$s.",
+  "spawn_notification.tracker.already_tracking": "Verfolgt bereits %1$s.",
+  "spawn_notification.tracker.cleared": "Poke Tracker-Tracking-Liste geleert.",
+  "spawn_notification.tracker.empty": "Dieser Poke Tracker verfolgt keine Pokémon.",
+  "spawn_notification.tracker.tracking_list": "Verfolgt derzeit:",
+  "spawn_notification.tracker.no_energy": "Der Poke Tracker hat keine Energie mehr.",
+  "spawn_notification.tracker.tooltip.energy": "Energie: %1$s / %2$s",
+  "spawn_notification.tracker.tooltip.tracking": "Verfolgt:",
+  "spawn_notification.tracker.notification": "Dein Tracker hat ein %1$s%2$s%3$s%4$s entdeckt! %5$s%6$s%7$s%8$s%9$s"
 }

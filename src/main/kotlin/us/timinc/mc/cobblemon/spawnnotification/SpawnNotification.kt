@@ -5,11 +5,17 @@ import com.cobblemon.mod.common.api.events.CobblemonEvents
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
+import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
+import net.minecraft.core.Registry
+import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.sounds.SoundEvent
+import net.minecraft.world.item.CreativeModeTabs
+import net.minecraft.world.item.Item
 import us.timinc.mc.cobblemon.spawnnotification.config.ConfigBuilder
 import us.timinc.mc.cobblemon.spawnnotification.config.SpawnNotificationConfig
 import us.timinc.mc.cobblemon.spawnnotification.events.*
+import us.timinc.mc.cobblemon.spawnnotification.items.PokeTrackerItem
 
 object SpawnNotification : ModInitializer {
     const val MOD_ID = "spawn_notification"
@@ -27,10 +33,25 @@ object SpawnNotification : ModInitializer {
     @JvmStatic
     var SHINY_SOUND_EVENT: SoundEvent = SoundEvent.createVariableRangeEvent(SHINY_SOUND_ID)
 
+    // Define the new item
+    val POKE_TRACKER_ITEM: Item = PokeTrackerItem(Item.Properties().stacksTo(1))
+
     override fun onInitialize() {
+        // Register Item
+        // Fix 1: Use fromNamespaceAndPath instead of private constructor
+        Registry.register(BuiltInRegistries.ITEM, ResourceLocation.fromNamespaceAndPath(MOD_ID, "poke_tracker"), POKE_TRACKER_ITEM)
+        // Add item to creative tab
+        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register { content ->
+            // Fix 2: Use accept() instead of add()
+            content.accept(POKE_TRACKER_ITEM)
+        }
+
+        // Register Events
         CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe(Priority.LOWEST, AttachBucket::handle)
         CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe(Priority.LOWEST, BroadcastSpawn::handle)
         CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe(Priority.LOWEST, PlayShinySound::handle)
+        CobblemonEvents.POKEMON_ENTITY_SPAWN.subscribe(Priority.LOWEST, PokeTrackerNotification::handle) // New handler
+
         CobblemonEvents.POKEMON_SENT_POST.subscribe(Priority.LOWEST, PlayShinyPlayerSound::handle)
         CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.LOWEST, BroadcastCapture::handle)
         CobblemonEvents.POKEMON_FAINTED.subscribe(Priority.LOWEST, BroadcastFaint::handle)
@@ -51,3 +72,4 @@ object SpawnNotification : ModInitializer {
         xaerosPresent = true
     }
 }
+
