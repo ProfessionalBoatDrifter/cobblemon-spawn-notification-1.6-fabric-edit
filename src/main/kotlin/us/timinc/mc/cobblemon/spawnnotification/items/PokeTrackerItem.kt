@@ -2,10 +2,9 @@ package us.timinc.mc.cobblemon.spawnnotification.items
 
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity
 import net.minecraft.ChatFormatting
-import net.minecraft.nbt.CompoundTag
-import net.minecraft.nbt.ListTag
-import net.minecraft.nbt.StringTag
 import net.minecraft.network.chat.Component
+import net.minecraft.resources.ResourceLocation
+import net.minecraft.util.Unit
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.InteractionResult
 import net.minecraft.world.InteractionResultHolder
@@ -16,27 +15,16 @@ import net.minecraft.world.item.Item
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.TooltipFlag
 import net.minecraft.world.level.Level
+import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.CURRENT_ENERGY
+import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.NOTIFY_NO_ENERGY
+import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.TRACKED_POKEMON
 import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.config
 
 class PokeTrackerItem(properties: Properties) : Item(properties) {
-    companion object {
-        const val TRACKER_DATA = "poke_tracker_data"
-        const val CURRENT_ENERGY = "current_energy"
-        const val TRACKED_POKEMON = "tracked_pokemon"
-    }
+    // No companion object needed for keys anymore, they are in SpawnNotification
 
-    // Add energy on creation
-    override fun getDefaultInstance(): ItemStack {
-        val stack = super.getDefaultInstance()
-        if (config.pokeTrackerEnergyEnabled) {
-            // Fix: Use vanilla NBT access
-            val mainTag = stack.getOrCreateTag()
-            val trackerTag = mainTag.getCompound(TRACKER_DATA)
-            trackerTag.putInt(CURRENT_ENERGY, config.pokeTrackerMaxEnergy)
-            mainTag.put(TRACKER_DATA, trackerTag) // Put the sub-tag back
-        }
-        return stack
-    }
+    // getDefaultInstance override is no longer needed
+    // Default values are set in SpawnNotification.kt when registering the item
 
     /**
      * Handles energy drain once per second (every 20 ticks).
@@ -46,25 +34,27 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
 
         // Run once per second
         if (level.gameTime % 20 == 0L) {
-            // Fix: Use vanilla NBT access
-            val mainTag = stack.getOrCreateTag()
-            val nbt = mainTag.getCompound(TRACKER_DATA)
-            var currentEnergy = nbt.getInt(CURRENT_ENERGY)
+            // Use Data Components instead of NBT
+            var currentEnergy = stack.getOrDefault(CURRENT_ENERGY, config.pokeTrackerMaxEnergy)
 
             if (currentEnergy <= 0) {
                 // Notify player they are out of energy (but only once)
-                if (!nbt.getBoolean("notify_no_energy")) {
-                    entity.sendSystemMessage(Component.translatable("spawn_notification.tracker.no_energy").withStyle(ChatFormatting.RED))
-                    nbt.putBoolean("notify_no_energy", true)
+                if (!stack.has(NOTIFY_NO_ENERGY)) {
+                    entity.sendSystemMessage(
+                        Component.translatable("spawn_notification.tracker.no_energy")
+                            .withStyle(ChatFormatting.RED)
+                    )
+                    // Set the flag component
+                    stack.set(NOTIFY_NO_ENERGY, Unit.INSTANCE)
                 }
-                mainTag.put(TRACKER_DATA, nbt) // Save NBT changes
                 return
             } else {
                 // Reset notification flag if it has power
-                nbt.remove("notify_no_energy")
+                stack.remove(NOTIFY_NO_ENERGY)
             }
 
-            val trackedList = nbt.getList(TRACKED_POKEMON, 8) as ListTag // 8 = String
+            // Get component list (defaults to emptyList if not present)
+            val trackedList = stack.getOrDefault(TRACKED_POKEMON, emptyList())
 
             // Drain idle energy + active energy (if tracking)
             val drain = if (trackedList.isEmpty()) {
@@ -74,9 +64,8 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
             }
 
             currentEnergy = (currentEnergy - drain).coerceAtLeast(0)
-            nbt.putInt(CURRENT_ENERGY, currentEnergy)
-
-            mainTag.put(TRACKER_DATA, nbt) // Save NBT changes
+            // Set the new energy value
+            stack.set(CURRENT_ENERGY, currentEnergy)
         }
     }
 
@@ -93,39 +82,49 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
             return InteractionResult.PASS
         }
 
-        // Fix: Use vanilla NBT access
-        val mainTag = stack.getOrCreateTag()
-
         // Check for energy
         if (config.pokeTrackerEnergyEnabled) {
-            val nbt = mainTag.getCompound(TRACKER_DATA) // Get sub-tag
-            if (nbt.getInt(CURRENT_ENERGY) <= 0) {
-                player.sendSystemMessage(Component.translatable("spawn_notification.tracker.no_energy").withStyle(ChatFormatting.RED))
+            if (stack.getOrDefault(CURRENT_ENERGY, 0) <= 0) {
+                player.sendSystemMessage(
+                    Component.translatable("spawn_notification.tracker.no_energy")
+                        .withStyle(ChatFormatting.RED)
+                )
                 return InteractionResult.FAIL
             }
         }
 
         val pokemon = interactionTarget.pokemon
         val speciesId = pokemon.species.resourceIdentifier.toString()
-        val nbt = mainTag.getCompound(TRACKER_DATA) // Get sub-tag
-        val trackedList = nbt.getList(TRACKED_POKEMON, 8) as ListTag
+        // Get component list (defaults to emptyList if not present)
+        val trackedList = stack.getOrDefault(TRACKED_POKEMON, emptyList())
 
         // Check if tracker is full
         if (trackedList.size >= config.pokeTrackerMaxTrackedPerItem) {
-            player.sendSystemMessage(Component.translatable("spawn_notification.tracker.full").withStyle(ChatFormatting.RED))
+            player.sendSystemMessage(
+                Component.translatable("spawn_notification.tracker.full")
+                    .withStyle(ChatFormatting.RED)
+            )
             return InteractionResult.SUCCESS
         }
 
         // Add to list if not already present
-        if (trackedList.any { (it as StringTag).asString == speciesId }) {
-            player.sendSystemMessage(Component.translatable("spawn_notification.tracker.already_tracking", pokemon.species.translatedName).withStyle(ChatFormatting.YELLOW))
+        if (trackedList.contains(speciesId)) {
+            player.sendSystemMessage(
+                Component.translatable(
+                    "spawn_notification.tracker.already_tracking",
+                    pokemon.species.translatedName
+                ).withStyle(ChatFormatting.YELLOW)
+            )
         } else {
-            trackedList.add(StringTag.valueOf(speciesId))
-            nbt.put(TRACKED_POKEMON, trackedList)
-            player.sendSystemMessage(Component.translatable("spawn_notification.tracker.added", pokemon.species.translatedName).withStyle(ChatFormatting.GREEN))
+            // Lists from components are immutable, so we create a new list
+            val newList = trackedList + speciesId
+            stack.set(TRACKED_POKEMON, newList)
+            player.sendSystemMessage(
+                Component.translatable("spawn_notification.tracker.added", pokemon.species.translatedName)
+                    .withStyle(ChatFormatting.GREEN)
+            )
         }
 
-        mainTag.put(TRACKER_DATA, nbt) // Save NBT changes
         return InteractionResult.SUCCESS
     }
 
@@ -139,27 +138,31 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
         if (level.isClientSide) return InteractionResultHolder.success(stack)
 
         if (player.isShiftKeyDown) {
-            // Clear the list
-            // Fix: Use vanilla NBT access
-            val mainTag = stack.getOrCreateTag()
-            val nbt = mainTag.getCompound(TRACKER_DATA)
-            nbt.put(TRACKED_POKEMON, ListTag())
-            mainTag.put(TRACKER_DATA, nbt) // Save NBT changes
-            player.sendSystemMessage(Component.translatable("spawn_notification.tracker.cleared").withStyle(ChatFormatting.GRAY))
+            // Clear the list by setting it to an empty list
+            stack.set(TRACKED_POKEMON, emptyList())
+            player.sendSystemMessage(
+                Component.translatable("spawn_notification.tracker.cleared")
+                    .withStyle(ChatFormatting.GRAY)
+            )
         } else {
             // Display the list
-            // Fix: Use vanilla read-only NBT access
-            val nbt = stack.getTag()?.getCompound(TRACKER_DATA)
-            val trackedList = nbt?.getList(TRACKED_POKEMON, 8) // No cast needed here
+            // get() returns List<String>? (nullable)
+            val trackedList = stack.get(TRACKED_POKEMON)
 
             if (trackedList == null || trackedList.isEmpty()) {
-                player.sendSystemMessage(Component.translatable("spawn_notification.tracker.empty").withStyle(ChatFormatting.GRAY))
+                player.sendSystemMessage(
+                    Component.translatable("spawn_notification.tracker.empty")
+                        .withStyle(ChatFormatting.GRAY)
+                )
             } else {
-                player.sendSystemMessage(Component.translatable("spawn_notification.tracker.tracking_list").withStyle(ChatFormatting.AQUA))
-                trackedList.forEach {
-                    // Fix: Cast 'it' from Tag to StringTag to safely use asString
-                    val speciesId = (it as StringTag).asString
-                    val species = com.cobblemon.mod.common.api.pokemon.PokemonSpecies.get(speciesId)
+                player.sendSystemMessage(
+                    Component.translatable("spawn_notification.tracker.tracking_list")
+                        .withStyle(ChatFormatting.AQUA)
+                )
+                trackedList.forEach { speciesId ->
+                    // Fix: Use getByIdentifier and parse the string
+                    val species =
+                        com.cobblemon.mod.common.api.pokemon.PokemonSpecies.getByIdentifier(ResourceLocation.parse(speciesId))
                     val name = species?.translatedName ?: Component.literal(speciesId).withStyle(ChatFormatting.RED)
                     player.sendSystemMessage(Component.literal("- ").append(name))
                 }
@@ -172,37 +175,43 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
     /**
      * Adds tooltip info for energy and tracked species.
      */
-    // Fix: Correct 'appendTooltip' signature using TooltipFlag
-    override fun appendTooltip(
+    // Fix 1: Correct method name to 'appendHoverText'
+    // Fix 2: Correct parameter name to 'list'
+    override fun appendHoverText(
         stack: ItemStack,
-        context: Item.TooltipContext, // Use Item.TooltipContext
-        tooltipComponents: MutableList<Component>,
-        tooltipFlag: TooltipFlag // Use TooltipFlag
+        context: Item.TooltipContext,
+        list: MutableList<Component>, // Changed from 'tooltipComponents' to 'list'
+        tooltipFlag: TooltipFlag
     ) {
         if (!config.pokeTrackerEnabled) return
 
-        // Fix: Use vanilla read-only NBT access
-        val nbt = stack.getTag()?.getCompound(TRACKER_DATA)
-
         // Show energy
         if (config.pokeTrackerEnergyEnabled) {
-            val currentEnergy = nbt?.getInt(CURRENT_ENERGY) ?: config.pokeTrackerMaxEnergy
-            tooltipComponents.add(
-                Component.translatable("spawn_notification.tracker.tooltip.energy", currentEnergy, config.pokeTrackerMaxEnergy)
+            val currentEnergy = stack.getOrDefault(CURRENT_ENERGY, config.pokeTrackerMaxEnergy)
+            list.add( // Use 'list'
+                Component.translatable(
+                    "spawn_notification.tracker.tooltip.energy",
+                    currentEnergy,
+                    config.pokeTrackerMaxEnergy
+                )
                     .withStyle(ChatFormatting.GRAY)
             )
         }
 
         // Show tracked list
-        val trackedList = nbt?.getList(TRACKED_POKEMON, 8)
+        // get() returns List<String>? (nullable)
+        val trackedList = stack.get(TRACKED_POKEMON)
         if (trackedList != null && trackedList.isNotEmpty()) {
-            tooltipComponents.add(Component.translatable("spawn_notification.tracker.tooltip.tracking").withStyle(ChatFormatting.AQUA))
-            trackedList.forEach {
-                // Fix: Cast 'it' from Tag to StringTag to safely use asString
-                val speciesId = (it as StringTag).asString
-                val species = com.cobblemon.mod.common.api.pokemon.PokemonSpecies.get(speciesId)
+            list.add( // Use 'list'
+                Component.translatable("spawn_notification.tracker.tooltip.tracking")
+                    .withStyle(ChatFormatting.AQUA)
+            )
+            trackedList.forEach { speciesId ->
+                // Fix 3: Use getByIdentifier and parse the string
+                val species =
+                    com.cobblemon.mod.common.api.pokemon.PokemonSpecies.getByIdentifier(ResourceLocation.parse(speciesId))
                 val name = species?.translatedName ?: Component.literal(speciesId).withStyle(ChatFormatting.RED)
-                tooltipComponents.add(Component.literal(" - ").append(name).withStyle(ChatFormatting.GRAY))
+                list.add(Component.literal(" - ").append(name).withStyle(ChatFormatting.GRAY)) // Use 'list'
             }
         }
     }
@@ -210,15 +219,13 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
     // --- Energy Bar Display ---
 
     override fun isBarVisible(stack: ItemStack): Boolean {
-        // Fix: Use vanilla read-only NBT access
         // Show bar only if energy is enabled and not full
-        return config.pokeTrackerEnergyEnabled && (stack.getTag()?.getCompound(TRACKER_DATA)?.getInt(CURRENT_ENERGY) ?: config.pokeTrackerMaxEnergy) < config.pokeTrackerMaxEnergy
+        return config.pokeTrackerEnabled &&
+                (stack.getOrDefault(CURRENT_ENERGY, config.pokeTrackerMaxEnergy) < config.pokeTrackerMaxEnergy)
     }
 
     override fun getBarWidth(stack: ItemStack): Int {
-        // Fix: Use vanilla read-only NBT access
-        val nbt = stack.getTag()?.getCompound(TRACKER_DATA)
-        val currentEnergy = nbt?.getInt(CURRENT_ENERGY) ?: config.pokeTrackerMaxEnergy
+        val currentEnergy = stack.getOrDefault(CURRENT_ENERGY, config.pokeTrackerMaxEnergy)
         // Calculate durability bar width (13 pixels max)
         return ((currentEnergy.toDouble() / config.pokeTrackerMaxEnergy) * 13).toInt()
     }
@@ -228,5 +235,4 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
         return 0x00D1FF
     }
 }
-
 

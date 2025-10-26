@@ -35,6 +35,14 @@ dependencies {
     // XaerosMinimap
     modImplementation("maven.modrinth:xaeros-minimap:${property("xaeros-minimap_version")}")
     modImplementation("maven.modrinth:xaeros-world-map:${property("xaeros-world-map_version")}")
+
+    // Tech Reborn
+    // This provides the EnergyStorage API
+    modImplementation("TechReborn:TechReborn-1.21.1:${property("techreborn_version")}")
+
+    // Oritech
+    // Also uses and provides the EnergyStorage API
+    modImplementation("maven.modrinth:oritech:${property("oritech_version")}")
 }
 
 tasks {

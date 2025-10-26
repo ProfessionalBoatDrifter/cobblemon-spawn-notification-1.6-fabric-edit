@@ -43,7 +43,7 @@ object Broadcast {
      * @param player The player.
      * @param message The message to send.
      */
-    private fun broadcastMessage(player: ServerPlayer, message: Component) {
+    public fun broadcastMessage(player: ServerPlayer, message: Component) {
         player.sendSystemMessage(message)
     }
 }
