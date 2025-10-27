@@ -55,5 +55,13 @@
   "spawn_notification.tracker.tooltip.energy": "Energy: %1$s / %2$s",
   "spawn_notification.tracker.tooltip.tracking": "Tracking:",
   "spawn_notification.tracker.notification": "Your tracker detected a %1$s%2$s%3$s%4$s! %5$s%6$s%7$s%8$s%9$s",
-  "spawn_notification.trackersoundsubtitle": "PokéTracker ping"
+  "spawn_notification.trackersoundsubtitle": "PokéTracker ping",
+  "spawn_notification.tracker.mode_changed": "Tracker mode set to: %1$s",
+  "spawn_notification.tracker.tooltip.mode": "Mode: %1$s",
+  "spawn_notification.tracker.mode.view_list": "View List",
+  "spawn_notification.tracker.mode.add_pokemon": "Add Pokémon",
+  "spawn_notification.tracker.mode.ping_glow": "Ping (Glow)",
+  "spawn_notification.tracker.mode.clear_list": "Clear List",
+  "spawn_notification.tracker.mode.add_pokemon.message": "Tracker ready. Right-click a Pokémon to track it.",
+  "spawn_notification.tracker.mode.ping_glow.message": "Ping (Glow) mode activated. (Not yet implemented)"
 }

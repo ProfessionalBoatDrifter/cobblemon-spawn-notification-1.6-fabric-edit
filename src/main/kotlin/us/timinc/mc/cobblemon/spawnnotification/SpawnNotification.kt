@@ -21,6 +21,7 @@ import us.timinc.mc.cobblemon.spawnnotification.config.SpawnNotificationConfig
 import us.timinc.mc.cobblemon.spawnnotification.events.*
 import us.timinc.mc.cobblemon.spawnnotification.items.PokeTrackerEnergyStorage
 import us.timinc.mc.cobblemon.spawnnotification.items.PokeTrackerItem
+import us.timinc.mc.cobblemon.spawnnotification.items.PokeTrackerMode
 
 object SpawnNotification : ModInitializer {
     const val MOD_ID = "spawn_notification"
@@ -65,6 +66,11 @@ object SpawnNotification : ModInitializer {
         BuiltInRegistries.DATA_COMPONENT_TYPE,
         ResourceLocation.fromNamespaceAndPath(MOD_ID, "ping_cooldown"),
         DataComponentType.builder<Int>().persistent(Codec.INT).build()
+    )
+    val TRACKER_MODE: DataComponentType<PokeTrackerMode> = Registry.register(
+        BuiltInRegistries.DATA_COMPONENT_TYPE,
+        ResourceLocation.fromNamespaceAndPath(MOD_ID, "tracker_mode"),
+        DataComponentType.builder<PokeTrackerMode>().persistent(PokeTrackerMode.CODEC).build()
     )
     // --- End Custom Data Components ---
 

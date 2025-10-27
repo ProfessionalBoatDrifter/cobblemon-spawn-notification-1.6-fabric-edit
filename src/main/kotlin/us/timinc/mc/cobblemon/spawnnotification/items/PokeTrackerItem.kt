@@ -23,6 +23,7 @@ import net.minecraft.sounds.SoundEvent
 import net.minecraft.sounds.SoundSource
 import net.minecraft.util.Mth
 import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.PING_COOLDOWN
+import us.timinc.mc.cobblemon.spawnnotification.SpawnNotification.TRACKER_MODE
 import us.timinc.mc.cobblemon.spawnnotification.util.isReallyWild
 
 class PokeTrackerItem(properties: Properties) : Item(properties) {
@@ -138,6 +139,12 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
             return InteractionResult.PASS
         }
 
+        // Check if item is in the correct mode
+        val currentMode = stack.getOrDefault(TRACKER_MODE, PokeTrackerMode.VIEW_LIST)
+        if (currentMode != PokeTrackerMode.ADD_POKEMON) {
+            return InteractionResult.PASS
+        }
+
         // Check for energy
         if (config.pokeTrackerEnergyEnabled) {
             if (stack.getOrDefault(CURRENT_ENERGY, 0) <= 0) {
@@ -186,41 +193,78 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
 
     /**
      * Handles right-clicking in the air.
-     * Shift-click: Clears the tracker list.
-     * Normal click: Shows the current list.
+     * Shift-click: Cycles the tracker's mode.
+     * Normal click: Performs the action for the current mode.
      */
     override fun use(level: Level, player: Player, interactionHand: InteractionHand): InteractionResultHolder<ItemStack> {
         val stack = player.getItemInHand(interactionHand)
         if (level.isClientSide) return InteractionResultHolder.success(stack)
 
+        val currentMode = stack.getOrDefault(TRACKER_MODE, PokeTrackerMode.VIEW_LIST)
+
         if (player.isShiftKeyDown) {
-            // Clear the list by setting it to an empty list
-            stack.set(TRACKED_POKEMON, emptyList())
+            // --- Cycle Mode (Temporary mechanic) ---
+            // This will be replaced by sneak + scroll later
+            val newMode = currentMode.next()
+            stack.set(TRACKER_MODE, newMode)
             player.sendSystemMessage(
-                Component.translatable("spawn_notification.tracker.cleared")
-                    .withStyle(ChatFormatting.GRAY)
+                Component.translatable(
+                    "spawn_notification.tracker.mode_changed",
+                    Component.translatable("spawn_notification.tracker.mode.${newMode.name.lowercase()}")
+                ).withStyle(ChatFormatting.YELLOW)
             )
         } else {
-            // Display the list
-            // get() returns List<String>? (nullable)
-            val trackedList = stack.get(TRACKED_POKEMON)
+            // --- Perform Action Based on Mode ---
+            when (currentMode) {
+                PokeTrackerMode.VIEW_LIST -> {
+                    // Display the list
+                    val trackedList = stack.get(TRACKED_POKEMON)
 
-            if (trackedList == null || trackedList.isEmpty()) {
-                player.sendSystemMessage(
-                    Component.translatable("spawn_notification.tracker.empty")
-                        .withStyle(ChatFormatting.GRAY)
-                )
-            } else {
-                player.sendSystemMessage(
-                    Component.translatable("spawn_notification.tracker.tracking_list")
-                        .withStyle(ChatFormatting.AQUA)
-                )
-                trackedList.forEach { speciesId ->
-                    // Fix: Use getByIdentifier and parse the string
-                    val species =
-                        com.cobblemon.mod.common.api.pokemon.PokemonSpecies.getByIdentifier(ResourceLocation.parse(speciesId))
-                    val name = species?.translatedName ?: Component.literal(speciesId).withStyle(ChatFormatting.RED)
-                    player.sendSystemMessage(Component.literal("- ").append(name))
+                    if (trackedList == null || trackedList.isEmpty()) {
+                        player.sendSystemMessage(
+                            Component.translatable("spawn_notification.tracker.empty")
+                                .withStyle(ChatFormatting.GRAY)
+                        )
+                    } else {
+                        player.sendSystemMessage(
+                            Component.translatable("spawn_notification.tracker.tracking_list")
+                                .withStyle(ChatFormatting.AQUA)
+                        )
+                        trackedList.forEach { speciesId ->
+                            val species =
+                                com.cobblemon.mod.common.api.pokemon.PokemonSpecies.getByIdentifier(
+                                    ResourceLocation.parse(speciesId)
+                                )
+                            val name =
+                                species?.translatedName ?: Component.literal(speciesId).withStyle(ChatFormatting.RED)
+                            player.sendSystemMessage(Component.literal("- ").append(name))
+                        }
+                    }
+                }
+
+                PokeTrackerMode.CLEAR_LIST -> {
+                    // Clear the list by setting it to an empty list
+                    stack.set(TRACKED_POKEMON, emptyList())
+                    player.sendSystemMessage(
+                        Component.translatable("spawn_notification.tracker.cleared")
+                            .withStyle(ChatFormatting.GRAY)
+                    )
+                }
+
+                PokeTrackerMode.ADD_POKEMON -> {
+                    // Send instructional message
+                    player.sendSystemMessage(
+                        Component.translatable("spawn_notification.tracker.mode.add_pokemon.message")
+                            .withStyle(ChatFormatting.GREEN)
+                    )
+                }
+
+                PokeTrackerMode.PING_GLOW -> {
+                    // Placeholder for new feature
+                    player.sendSystemMessage(
+                        Component.translatable("spawn_notification.tracker.mode.ping_glow.message")
+                            .withStyle(ChatFormatting.AQUA)
+                    )
                 }
             }
         }
@@ -240,6 +284,17 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
         tooltipFlag: TooltipFlag
     ) {
         if (!config.pokeTrackerEnabled) return
+
+        // Show current mode
+        val currentMode = stack.getOrDefault(TRACKER_MODE, PokeTrackerMode.VIEW_LIST)
+        list.add(
+            Component.translatable(
+                "spawn_notification.tracker.tooltip.mode",
+                Component.translatable("spawn_notification.tracker.mode.${currentMode.name.lowercase()}")
+                    .withStyle(ChatFormatting.YELLOW)
+            ).withStyle(ChatFormatting.GRAY)
+        )
+
 
         // Show energy
         if (config.pokeTrackerEnergyEnabled) {
@@ -291,4 +346,3 @@ class PokeTrackerItem(properties: Properties) : Item(properties) {
         return 0x00D1FF
     }
 }
-
